@@ -56,7 +56,7 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
   def handle_info({:trace, trace}, socket) do
     traces = [trace | socket.assigns.traces]
     socket = assign(socket, traces: traces)
-    Process.put(:traces, traces)
+    Process.put(:traces, {traces, Enum.count(traces)})
     {:noreply, socket}
   end
 
@@ -84,7 +84,7 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
         row_attrs={&row_attrs/1}
       >
         <:col :let={trace} field={:id}>
-          <%= trace[:id] %>
+          <%= trace.id %>
         </:col>
         <:col :let={%{mfa: {m, _, _}} = trace} field={:module}>
           <%= m %>
@@ -99,24 +99,24 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
           <%= inspect(a) %>
         </:col>
         <:col :let={trace} field={:pid}>
-          <%= inspect(trace[:pid]) %>
+          <%= inspect(trace.pid) %>
         </:col>
         <:col :let={trace} field={:called_at} sortable={:desc}>
-          <%= trace[:called_at] %>
+          <%= trace.called_at %>
         </:col>
         <:col :let={trace} field={:returned_at} sortable={:desc}>
-          <%= if trace[:returned_at] do
-            trace[:returned_at]
+          <%= if trace.returned_at do
+            trace.returned_at
           end %>
         </:col>
-        <:col :let={trace} field={:returned_at} sortable={:desc}>
-          <%= if trace[:returned_at] do
-            DateTime.diff(trace[:called_at], trace[:returned_at], :microsecond)
+        <:col :let={trace} field={:took_ms} sortable={:desc}>
+          <%= if trace.returned_at do
+            DateTime.diff(trace.returned_at, trace.called_at, :microsecond)
           end %>
         </:col>
         <:col :let={trace} field={:return_value}>
-          <%= if trace[:return_value] do
-            inspect(trace[:return_value])
+          <%= if trace.return_value do
+            inspect(trace.return_value)
           end %>
         </:col>
       </.live_table>
@@ -137,7 +137,7 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
   def fetch_traces(params, node) do
     %{search: search, sort_by: sort_by, sort_dir: sort_dir, limit: limit} = params
 
-    Process.get(:traces) || []
+    Process.get(:traces) || {[], 0}
   end
 
   def row_attrs(table) do
@@ -150,16 +150,16 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
 
   defp show_result(result) do
     case result do
-      {:ok, {:set, functions_matched}} ->
+      [{:ok, {:set, functions_matched}} | _] ->
         "Functions matched #{functions_matched}."
 
-      {:ok, {:reset_existing, functions_matched}} ->
+      [{:ok, {:reset_existing, functions_matched}} | _] ->
         "Reset existing trace. Functions matched #{functions_matched}."
 
-      {:error, :full_wildcard_rejected} ->
+      [{:error, :full_wildcard_rejected} | _] ->
         "Matching a full wildcard is not allowed."
 
-      {:error, {:covered_already, mfa}} ->
+      [{:error, {:covered_already, mfa}} | _] ->
         "The chosen pattern is covered by an existing trace (#{inspect(mfa)})."
     end
   end
