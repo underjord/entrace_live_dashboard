@@ -40,7 +40,7 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
       end
 
     mfa = {String.to_existing_atom(module), String.to_existing_atom(function), arity}
-    result = socket.assigns.tracer.trace(mfa, self())
+    result = socket.assigns.tracer.trace_cluster(mfa, self())
 
     socket =
       socket
