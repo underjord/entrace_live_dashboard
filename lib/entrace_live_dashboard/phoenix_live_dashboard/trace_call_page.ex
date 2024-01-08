@@ -5,6 +5,7 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
   @impl Phoenix.LiveDashboard.PageBuilder
   def init(opts) do
     tracer = Keyword.fetch!(opts, :tracer)
+
     {:ok, %{tracer: tracer}, []}
   end
 
@@ -15,16 +16,57 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
 
   @impl Phoenix.LiveDashboard.PageBuilder
   def mount(_params, session, socket) do
+    modules =
+      Entrace.Utils.list_modules()
+      |> Entrace.Utils.trim_elixir_namespace()
+
     socket =
       socket
       |> assign(
         pattern_form: blank_input_form(),
         tracer: session.tracer,
         set_pattern_result: nil,
-        traces: nil
+        traces: nil,
+        modules: modules,
+        functions: []
       )
 
     {:ok, socket}
+  end
+
+  @impl Phoenix.LiveDashboard.PageBuilder
+  def handle_event("selection", %{"module" => module}, socket) do
+    # This stuff is messy and silly but works at least :)
+    module =
+      try do
+        full = "Elixir." <> module
+
+        full
+        |> String.to_existing_atom()
+        |> Code.ensure_loaded()
+
+        full
+      rescue
+        _ ->
+          try do
+            module
+            |> String.to_existing_atom()
+            |> Code.ensure_loaded()
+          rescue
+            _ ->
+              nil
+          end
+
+          module
+      end
+
+    try do
+      functions = Entrace.Utils.list_functions_for_module(module) |> Enum.map(&elem(&1, 0))
+      {:noreply, assign(socket, functions: functions)}
+    rescue
+      _ ->
+        {:noreply, socket}
+    end
   end
 
   @impl Phoenix.LiveDashboard.PageBuilder
@@ -39,7 +81,15 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
         num -> String.to_integer(num)
       end
 
-    mfa = {String.to_existing_atom(module), String.to_existing_atom(function), arity}
+    module =
+      try do
+        String.to_existing_atom("Elixir." <> module)
+      rescue
+        _ ->
+          String.to_existing_atom(module)
+      end
+
+    mfa = {module, String.to_existing_atom(function), arity}
     result = socket.assigns.tracer.trace_cluster(mfa, self())
 
     socket =
@@ -64,11 +114,43 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
   def render(assigns) do
     ~H"""
     <section id="trace-call-form">
-      <.form for={@pattern_form} phx-submit="start-trace">
-        <label>Module <input type="text" name="module" value="_" /></label>
-        <label>Function <input type="text" name="function" value="_" /></label>
-        <label>Arity <input type="text" name="arity" value="_" /></label>
-        <button>Start trace</button>
+      <.form for={@pattern_form} phx-submit="start-trace" phx-change="selection">
+        <label>
+          Module
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            name="module"
+            list="modules"
+            placeholder="GenServer"
+            value=""
+          />
+          <datalist id="modules">
+            <%= for mod <- @modules do %>
+              <option value={mod |> to_string() |> String.replace("Elixir.", "")} />
+            <% end %>
+          </datalist>
+        </label>
+
+        <label>
+          Function
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            name="function"
+            list="functions"
+            value="_"
+          />
+          <datalist id="functions">
+            <%= for fun <- @functions do %>
+              <option value={fun} />
+            <% end %>
+          </datalist>
+        </label>
+        <label>
+          Arity <input type="text" class="form-control form-control-sm" name="arity" value="_" />
+        </label>
+        <button class="btn btn-primary btn-sm">Start trace</button>
       </.form>
     </section>
     <section :if={@set_pattern_result} id="trace-set-pattern-result">
