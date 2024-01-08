@@ -27,6 +27,7 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
         tracer: session.tracer,
         set_pattern_result: nil,
         traces: nil,
+        patterns: %{},
         modules: modules,
         functions: []
       )
@@ -86,18 +87,23 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
         String.to_existing_atom("Elixir." <> module)
       rescue
         _ ->
-          String.to_existing_atom(module)
+          # We are fine to create atoms that people with access to LiveDashboard want
+          String.to_atom(module)
       end
 
-    mfa = {module, String.to_existing_atom(function), arity}
+    mfa = {module, String.to_atom(function), arity}
     result = socket.assigns.tracer.trace_cluster(mfa, self())
+    patterns = socket.assigns.tracer.list_trace_patterns()
 
     socket =
       socket
       |> assign(
         set_pattern_result: result,
-        traces: []
+        traces: [],
+        patterns: patterns
       )
+
+    IO.inspect(patterns, label: "patterns")
 
     {:noreply, socket}
   end
@@ -157,6 +163,11 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
       <%= show_result(@set_pattern_result) %>
     </section>
     <section :if={@traces} id="trace-call-results">
+      <ul>
+        <%= for {pattern, _meta} <- @patterns do %>
+          <li><%= nice_pattern(pattern) %></li>
+        <% end %>
+      </ul>
       <.live_table
         id="traces-table"
         dom_id="traces-table"
@@ -243,6 +254,21 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
 
       [{:error, {:covered_already, mfa}} | _] ->
         "The chosen pattern is covered by an existing trace (#{inspect(mfa)})."
+    end
+  end
+
+  defp nice_pattern({m, f, a} = _pattern) do
+    m =
+      case to_string(m) do
+        "Elixir." <> m -> m
+        m -> m
+      end
+
+    case {m, f, a} do
+      {:_, :_, :_} -> "- Full wildcard pattern -"
+      {m, :_, :_} -> "#{m}"
+      {m, f, :_} -> "#{m}.#{f}"
+      {m, f, a} -> "#{m}.#{f}/#{a}"
     end
   end
 end

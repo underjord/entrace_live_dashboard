@@ -40,8 +40,8 @@ defmodule EntraceLiveDashboard.Router do
 
           live_session session_name, session_opts do
             # Assets
-            get "/css-:md5", EntraceLiveDashboard.Assets, :css, as: :entrace_live_dashboard_asset
-            get "/js-:md5", EntraceLiveDashboard.Assets, :js, as: :entrace_live_dashboard_asset
+            # get "/css-:md5", EntraceLiveDashboard.Assets, :css, as: :entrace_live_dashboard_asset
+            # get "/js-:md5", EntraceLiveDashboard.Assets, :js, as: :entrace_live_dashboard_asset
 
             # All helpers are public contracts and cannot be changed
             live "/", EntraceLiveDashboard.PageLive, :home, route_opts
