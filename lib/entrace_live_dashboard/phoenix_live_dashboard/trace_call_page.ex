@@ -62,7 +62,12 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
       end
 
     try do
-      functions = Entrace.Utils.list_functions_for_module(module) |> Enum.map(&elem(&1, 0))
+      functions =
+        module
+        |> Entrace.Utils.list_functions_for_module()
+        |> Enum.map(&elem(&1, 0))
+        |> Enum.uniq()
+
       {:noreply, assign(socket, functions: functions)}
     rescue
       _ ->
