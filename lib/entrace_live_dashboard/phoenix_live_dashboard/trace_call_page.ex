@@ -36,7 +36,12 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
   end
 
   @impl Phoenix.LiveDashboard.PageBuilder
+  def handle_event("selection", %{"module" => ""}, socket) do
+    {:noreply, socket}
+  end
+
   def handle_event("selection", %{"module" => module}, socket) do
+    IO.inspect(module, label: "module")
     # This stuff is messy and silly but works at least :)
     module =
       try do
@@ -75,7 +80,10 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
     end
   end
 
-  @impl Phoenix.LiveDashboard.PageBuilder
+  def handle_event("start-trace", %{"module" => ""}, socket) do
+    {:noreply, socket}
+  end
+
   def handle_event(
         "start-trace",
         %{"module" => module, "function" => function, "arity" => arity},
@@ -185,7 +193,9 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
           <%= trace.id %>
         </:col>
         <:col :let={%{mfa: {m, _, _}} = trace} field={:module}>
-          <%= m %>
+          <%= with mod <- m |> to_string() |> String.replace_prefix("Elixir.", "") do
+            mod
+          end %>
         </:col>
         <:col :let={%{mfa: {_, f, _}} = trace} field={:function}>
           <%= f %>
