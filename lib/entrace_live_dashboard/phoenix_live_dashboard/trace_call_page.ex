@@ -245,7 +245,20 @@ defmodule EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage do
   def fetch_traces(params, node) do
     %{search: search, sort_by: sort_by, sort_dir: sort_dir, limit: limit} = params
 
-    Process.get(:traces) || {[], 0}
+    {items, count} = Process.get(:traces) || {[], 0}
+
+    filtered =
+      items
+      |> Enum.filter(fn trace ->
+        is_nil(search) || String.length(search) == 0 || inspect(Map.values(trace)) =~ search
+      end)
+      |> Enum.sort_by(
+        &Map.get(&1, sort_by),
+        sort_dir
+      )
+      |> Enum.take(limit)
+
+    {filtered, count}
   end
 
   def row_attrs(table) do
