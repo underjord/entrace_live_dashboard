@@ -35,7 +35,7 @@ defmodule EntraceLiveDashboard.MixProject do
       {:phoenix_live_view, "~> 0.19.0"},
       {:phoenix_live_dashboard, "~> 0.8.0"},
       {:jason, "~> 1.2"},
-      {:entrace, github: "lawik/entrace"}
+      {:entrace, "~> 0.1"}
     ]
   end
 
