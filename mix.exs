@@ -9,7 +9,22 @@ defmodule EntraceLiveDashboard.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+
+      # Docs
+      name: "Entrace Live Dashboard",
+      description: "Putting the best the BEAM has to offer, right in your Phoenix Live Dashboard",
+      source_url: "https://github.com/underjord/entrace_live_dashboard",
+      docs: [
+        # The main page in the docs
+        main: "readme",
+        extras: ["README.md"]
+      ],
+      package: [
+        name: :entrace_live_dashboard,
+        licenses: ["MIT"],
+        links: %{"GitHub" => "https://github.com/underjord/entrace_live_dashboard"}
+      ]
     ]
   end
 
@@ -39,18 +54,7 @@ defmodule EntraceLiveDashboard.MixProject do
     ]
   end
 
-  # Aliases are shortcuts or tasks specific to the current project.
-  # For example, to install project dependencies and perform other setup tasks, run:
-  #
-  #     $ mix setup
-  #
-  # See the documentation for `Mix` for more info on aliases.
   defp aliases do
-    [
-      setup: ["deps.get", "assets.setup", "assets.build"],
-      "assets.setup": ["esbuild.install --if-missing"],
-      "assets.build": ["esbuild default"],
-      "assets.deploy": ["esbuild default --minify", "phx.digest"]
-    ]
+    []
   end
 end

@@ -1,18 +1,30 @@
-# EntraceLiveDashboard
+# Entrace Live Dashboard
 
-To start your Phoenix server:
+Puts function tracing right into your Phoenix Live Dashboard.
 
-  * Run `mix setup` to install and setup dependencies
-  * Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+## Early version
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+The UI is still kind of rough. Should be plenty useful though. Contributions are very welcome.
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+## Installation
 
-## Learn more
+Add it to your deps in `mix.exs`:
 
-  * Official website: https://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Forum: https://elixirforum.com/c/phoenix-forum
-  * Source: https://github.com/phoenixframework/phoenix
+```elixir
+# ..
+{:entrace_live_dashboard, "~> 0.1"}
+# ..
+```
+
+Then add the page to your live_dashboard route in `router.ex`:
+
+```elixir
+  live_dashboard "/dashboard",
+    metrics: SampleWeb.Telemetry,
+    additional_pages: [
+      trace_calls:
+        {EntraceLiveDashboard.PhoenixLiveDashboard.TraceCallPage, tracer: Sample.Tracer}
+    ]
+```
+
+Visit your dashboard path and visit the "Trace Calls" menu item.
