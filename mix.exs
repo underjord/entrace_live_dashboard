@@ -50,7 +50,8 @@ defmodule EntraceLiveDashboard.MixProject do
       {:phoenix_live_view, "~> 0.19.0"},
       {:phoenix_live_dashboard, "~> 0.8.0"},
       {:jason, "~> 1.2"},
-      {:entrace, "~> 0.1"}
+      {:entrace, "~> 0.1"},
+      {:ex_doc, "~> 0.31", only: :dev, runtime: false}
     ]
   end
 
